@@ -111,6 +111,8 @@ class GtacInterface:
         self._idx = data_index
         self._finger = data_index // 3
         self._sec = data_index % 3
+        self._pressure_offset = np.zeros([4, 4])
+        self._force_offset = np.zeros(3)
 
     def start(self):
         self._reader.start()
@@ -123,12 +125,29 @@ class GtacInterface:
     def stop(self):
         self._reader.stop()
 
+    def zero(self, dt=0.2):
+        """Calculate the offset for sensor reading."""
+        self._pressure_offset = np.zeros([4, 4])
+        self._force_offset = np.zeros(3)
+        t0 = time.time()
+        pressures = []
+        forces = []
+        while time.time() - t0 < dt:
+            pressures.append(self.pressures)
+            forces.append(self.forces)
+        logger.debug("Numebr of data use for zeroing: %i" % len(pressures))
+        self._pressure_offset[:] = np.mean(np.array(pressures), axis=0)
+        self._force_offset[:] = np.mean(np.array(forces), axis=0)
+
     @property
     def pressures(self):
         indices = find_sec_index(self._finger, self._sec)
-        return self._reader.reading[indices[:16]].reshape([4, 4])
+        return (
+            self._reader.reading[indices[:16]].reshape([4, 4]) - self._pressure_offset
+        )
 
     @property
     def forces(self):
         start = self._finger * 9 + (2 - self._sec) * 3
-        return self._reader.reading[start : start + 3]
+        ret = -self._reader.reading[start : start + 3]
+        return ret - self._force_offset

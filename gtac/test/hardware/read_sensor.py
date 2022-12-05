@@ -15,6 +15,15 @@ sensor.start()
 
 t0 = time.time()
 
+while time.time() - t0 < 1:
+    print(sensor.forces)
+    print(sensor.pressures)
+    time.sleep(0.1)
+
+logging.info("======== Zeroing ========")
+sensor.zero()
+logging.info("======== Zeroed ========")
+
 while time.time() - t0 < 10:
     print(sensor.forces)
     print(sensor.pressures)

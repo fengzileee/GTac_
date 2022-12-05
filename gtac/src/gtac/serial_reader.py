@@ -5,8 +5,8 @@ The serial data has the format:
 - A sequence of data, each data consists of 2 bytes.
 - ending: b'>'
 
-The reader processes the reading the stores it as a list of integers, with each
-integer corresponding to a 2-byte data.
+The reader processes the reading and stores it as a numpy array, with each
+element corresponding to a 2-byte data.
 """
 import time
 import logging
@@ -73,10 +73,9 @@ class GtacSerialReader(metaclass=_GtacSerialReaderSingleton):
                 continue
             duration = read_time - self._last_read
             if duration > self._dt * 0.95:
-                if duration > self._dt * 1.05:
-                    violation_counter += 1
-                else:
-                    violation_counter = 0
+                violation_counter = (
+                    violation_counter + 1 if duration > self._dt * 1.05 else 0
+                )
                 if violation_counter >= violation_threshold:
                     logger.warning(
                         "%i consecutive realtime violations. Last violation dt: %s, desired dt: %s"
