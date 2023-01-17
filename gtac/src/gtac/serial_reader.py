@@ -105,5 +105,5 @@ class GtacSerialReader(metaclass=_GtacSerialReaderSingleton):
         return self._reading
 
     @property
-    def last_reading_time(self):
-        return self._last_read
+    def since_last_read(self):
+        return time.time() -  self._last_read

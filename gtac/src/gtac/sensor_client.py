@@ -140,14 +140,14 @@ class GtacInterface:
         self._force_offset[:] = np.mean(np.array(forces), axis=0)
 
     @property
-    def pressures(self):
+    def pressures(self) -> np.ndarray:
         indices = find_sec_index(self._finger, self._sec)
         return (
             self._reader.reading[indices[:16]].reshape([4, 4]) - self._pressure_offset
         )
 
     @property
-    def forces(self):
+    def forces(self) -> np.ndarray:
         start = self._finger * 9 + (2 - self._sec) * 3
         ret = -self._reader.reading[start : start + 3]
         return ret - self._force_offset
