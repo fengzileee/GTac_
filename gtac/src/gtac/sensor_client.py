@@ -93,11 +93,20 @@ def find_sec_index(finger, sec):
 class GtacInterface:
     """The interface for a single GTac sensor.
 
+    Gtac force/pressure convention: interaction force applied to the
+    environment.
+
+    Gtac axis:
+    - x: Pointing towards the "front" (opposite to the cable plugs).
+    - y: Pointing to the side.
+    - z: Normal to the contact surface, pointing outwards.
+
     Args:
         serial_port_name: Device name. e.g., /dev/ttyACM0 on Linux and COM3 on Windows.
         data_index: Which of the consecutive 19-number data this sensor corresponds to.
         baud_rate: Serial baud rate.
         frequency: Desired frequency. Warning will be emitted if not satisfied.
+
     """
 
     def __init__(
@@ -142,12 +151,14 @@ class GtacInterface:
     @property
     def pressures(self) -> np.ndarray:
         indices = find_sec_index(self._finger, self._sec)
-        return (
+        reading = (
             self._reader.reading[indices[:16]].reshape([4, 4]) - self._pressure_offset
         )
+        return np.flip(reading, axis=1)
 
     @property
     def forces(self) -> np.ndarray:
         start = self._finger * 9 + (2 - self._sec) * 3
-        ret = -self._reader.reading[start : start + 3]
+        reading = self._reader.reading
+        ret = np.array([-reading[start + 1], reading[start], -reading[start + 2]])
         return ret - self._force_offset
